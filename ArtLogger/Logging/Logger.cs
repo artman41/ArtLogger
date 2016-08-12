@@ -61,7 +61,7 @@ namespace ArtLogger.Logging {
                     Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] {msg}");
                     break;
             }
-            Log(string.Concat($"[{DateTime.Now.ToString("HH:mm:ss")}] ", msg));
+            Log(string.Concat($"[{DateTime.Now.ToString("HH:mm:ss")}] ", msg), level);
         }
 
         /// <summary>
@@ -74,9 +74,46 @@ namespace ArtLogger.Logging {
                 throw new Exception("Line Logged incorrectly!!");
             }
 
-            using(var log = File.CreateText(Path.Combine(Ref.path, Ref._CurrentFile + ".log"))) {
+            using(var log = File.AppendText(Path.Combine(Ref.path, Ref._CurrentFile + ".log"))) {
                 log.WriteLine(msg);
                 log.Flush();
+            }
+        }
+
+        /// <summary>
+        /// Logs everything to a text file.
+        /// </summary>
+        /// <param name="msg">Text being logged</param>
+        /// <param name="level">The Loglevel of the text</param>
+        private static void Log(String msg = "4220dea7-1f3a-430d-86ca-fd34dfcfb0e5", LogLevel level = LogLevel.None) {
+            //Sanity check to make sure things are actually being logged
+            if (msg == "4220dea7-1f3a-430d-86ca-fd34dfcfb0e5") {
+                throw new Exception("Line Logged incorrectly!!");
+            }
+
+            using (var log = File.AppendText(Path.Combine(Ref.path, Ref._CurrentFile + ".log"))) {
+                switch (level) {
+                    case LogLevel.Info:
+                        log.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (INFO) {msg}");
+                        log.Flush();
+                        break;
+                    case LogLevel.Warning:
+                        log.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (WARNING) {msg}");
+                        log.Flush();
+                        break;
+                    case LogLevel.Error:
+                        log.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (ERROR) {msg}");
+                        log.Flush();
+                        break;
+                    case LogLevel.Debug:
+                        log.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (DEBUG) {msg}");
+                        log.Flush();
+                        break;
+                    default:
+                        log.WriteLine(msg);
+                        log.Flush();
+                        break;
+                }
             }
         }
 
