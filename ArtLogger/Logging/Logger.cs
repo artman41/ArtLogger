@@ -23,7 +23,7 @@ namespace ArtLogger.Logging {
                 DirectoryInfo di = Directory.CreateDirectory(Ref.path);
             }
             Ref._CurrentFile = DateTime.Now.ToString("yyyy-MM-dd - HH.mm.ss");
-            Log($"Initializing ArtLogger @ {DateTime.Now} for Project {Assembly.GetCallingAssembly()} ...");
+            Log($"Initializing ArtLogger @ {DateTime.Now} for {Assembly.GetEntryAssembly()} ...");
         }
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace ArtLogger.Logging {
         /// <param name="c">The default log colour</param>
         internal static void Write(String msg, LogLevel level = LogLevel.None, ConsoleColor c = ConsoleColor.White) {
             Console.OutputEncoding = Encoding.Unicode;
-
+            if (msg == String.Empty) { return; }
             switch (level) {
                 case LogLevel.Info:
                     Console.ForegroundColor = ConsoleColor.DarkGreen;
@@ -55,6 +55,14 @@ namespace ArtLogger.Logging {
                 case LogLevel.None:
                     Console.ForegroundColor = c;
                     Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] {msg}");
+                    break;
+                case LogLevel.Received:
+                    Console.ForegroundColor = ConsoleColor.Magenta;
+                    Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (RECIEVED) {msg}");
+                    break;
+                case LogLevel.Sent:
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (SENT) {msg}");
                     break;
                 default:
                     Console.ForegroundColor = ConsoleColor.White;
@@ -107,6 +115,14 @@ namespace ArtLogger.Logging {
                         break;
                     case LogLevel.Debug:
                         log.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (DEBUG) {msg}");
+                        log.Flush();
+                        break;
+                    case LogLevel.Received:
+                        log.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (RECIEVED) {msg}");
+                        log.Flush();
+                        break;
+                    case LogLevel.Sent:
+                        log.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (SENT) {msg}");
                         log.Flush();
                         break;
                     default:
