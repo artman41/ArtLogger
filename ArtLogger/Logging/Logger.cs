@@ -5,7 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
+using System.Windows.Forms;
 
 namespace ArtLogger.Logging {
     /// <summary>
@@ -15,15 +16,42 @@ namespace ArtLogger.Logging {
 
     internal class Logger {
 
+        static LogStream _Stream = new LogStream();
+
+        static Thread DictWriter { get; set; }
+    
+        internal static LogStream Stream { get { return _Stream; } }
+
         /// <summary>
         /// Sets the logger for the project.
         /// </summary>
         internal static void SetLogger() {
+            DictWriter = new Thread(() => { WriteDict(); });
+            DictWriter.Start();
+            Application.ApplicationExit += Application_ApplicationExit;
+
             if (!Directory.Exists(Ref.path)) {
                 DirectoryInfo di = Directory.CreateDirectory(Ref.path);
             }
             Ref._CurrentFile = DateTime.Now.ToString("yyyy-MM-dd - HH.mm.ss");
             Log($"Initializing ArtLogger @ {DateTime.Now} for {Assembly.GetEntryAssembly()} ...");
+        }
+
+        static void Application_ApplicationExit(object sender, EventArgs e) {
+            DictWriter.Abort();
+        }
+
+        /// <summary>
+        /// Logs everything that is contained in the Stream.Data
+        /// </summary>
+        internal static void WriteDict() {
+            while (DictWriter.IsAlive) {
+                while (Stream.DataAvailable) {
+                    Tuple<String, Tuple<LogLevel, ConsoleColor>> item = Stream.Data.ElementAt(0);
+                    Write(item.Item1, item.Item2.Item1, item.Item2.Item2);
+                    Stream.Data.Remove(item);
+                }
+            }
         }
 
         /// <summary>
@@ -33,43 +61,43 @@ namespace ArtLogger.Logging {
         /// <param name="level">The log type</param>
         /// <param name="c">The default log colour</param>
         internal static void Write(String msg, LogLevel level = LogLevel.None, ConsoleColor c = ConsoleColor.White) {
-            Console.OutputEncoding = Encoding.Unicode;
-            if (msg == String.Empty) { return; }
-            switch (level) {
-                case LogLevel.Info:
-                    Console.ForegroundColor = ConsoleColor.DarkGreen;
-                    Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (INFO) {msg}");
-                    break;
-                case LogLevel.Warning:
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (WARNING) {msg}");
-                    break;
-                case LogLevel.Error:
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (ERROR) {msg}");
-                    break;
-                case LogLevel.Debug:
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (DEBUG) {msg}");
-                    break;
-                case LogLevel.None:
-                    Console.ForegroundColor = c;
-                    Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] {msg}");
-                    break;
-                case LogLevel.Received:
-                    Console.ForegroundColor = ConsoleColor.Magenta;
-                    Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (RECIEVED) {msg}");
-                    break;
-                case LogLevel.Sent:
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (SENT) {msg}");
-                    break;
-                default:
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] {msg}");
-                    break;
-            }
-            Log(string.Concat($"[{DateTime.Now.ToString("HH:mm:ss")}] ", msg), level);
+                Console.OutputEncoding = Encoding.Unicode;
+                if (msg == String.Empty) { return; }
+                switch (level) {
+                    case LogLevel.Info:
+                        Console.ForegroundColor = ConsoleColor.DarkGreen;
+                        Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (INFO) {msg}");
+                        break;
+                    case LogLevel.Warning:
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (WARNING) {msg}");
+                        break;
+                    case LogLevel.Error:
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (ERROR) {msg}");
+                        break;
+                    case LogLevel.Debug:
+                        Console.ForegroundColor = ConsoleColor.Gray;
+                        Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (DEBUG) {msg}");
+                        break;
+                    case LogLevel.None:
+                        Console.ForegroundColor = c;
+                        Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] {msg}");
+                        break;
+                    case LogLevel.Received:
+                        Console.ForegroundColor = ConsoleColor.Magenta;
+                        Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (RECIEVED) {msg}");
+                        break;
+                    case LogLevel.Sent:
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] (SENT) {msg}");
+                        break;
+                    default:
+                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] {msg}");
+                        break;
+                }
+                Log(msg, level);
         }
 
         /// <summary>
